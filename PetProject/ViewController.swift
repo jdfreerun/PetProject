@@ -4,29 +4,26 @@
 //
 //  Created by Albert Fayzullin on 26.04.2022.
 //
-
 import UIKit
 import SnapKit
 
-class ViewController: UIViewController, UITextFieldDelegate {
+class ViewController: UIViewController {
     
     private lazy var loginInput = UITextField()
     private lazy var passInput = UITextField()
     private lazy var authButton = UIButton()
     private lazy var bottomView = UIView()
     private lazy var titleLabel = UILabel()
-        
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.purple
+        view.backgroundColor = UIColor.systemBlue
         
         view.addSubview(titleLabel)
         titleLabel.text = "Hello, User!"
         titleLabel.textColor = UIColor.white
         titleLabel.font = UIFont.boldSystemFont(ofSize: 32)
         titleLabel.snp.makeConstraints { make in
-          
             make.centerX.equalToSuperview()
             make.top.equalToSuperview().offset(200)
         }
@@ -40,7 +37,7 @@ class ViewController: UIViewController, UITextFieldDelegate {
         }
         
         view.addSubview(loginInput)
-        loginInput.delegate = self
+        loginInput.autocorrectionType = .no
         loginInput.layer.borderWidth = 1
         loginInput.layer.borderColor = UIColor.lightGray.cgColor
         loginInput.layer.cornerRadius = 8
@@ -54,6 +51,7 @@ class ViewController: UIViewController, UITextFieldDelegate {
             make.centerX.equalTo(self.view)
         }
         
+        
         let showPassImg = UIImageView(frame: CGRect(x: 8.0, y: 12.0, width: 20.0, height: 20.0))
         let image = UIImage(named: "eye.fill")
         showPassImg.image = image
@@ -62,7 +60,6 @@ class ViewController: UIViewController, UITextFieldDelegate {
         showPassView.addSubview(showPassImg)
         
         view.addSubview(passInput)
-        passInput.delegate = self
         passInput.placeholder = "Введите пароль"
         passInput.layer.borderWidth = 1
         passInput.layer.borderColor = UIColor.lightGray.cgColor
@@ -77,10 +74,11 @@ class ViewController: UIViewController, UITextFieldDelegate {
         }
         passInput.rightViewMode = .always
         passInput.rightView = showPassView
+        passInput.returnKeyType = .done
         
         
         view.addSubview(authButton)
-        authButton.backgroundColor = UIColor.purple
+        authButton.backgroundColor = UIColor.systemBlue
         authButton.layer.cornerRadius = 10
         authButton.setTitle("Авторизоваться", for: .normal)
         authButton.snp.makeConstraints { make in
@@ -91,6 +89,7 @@ class ViewController: UIViewController, UITextFieldDelegate {
         authButton.alpha = 0.4
         authButton.isEnabled = false
         
+        setup()
         
     }
 //    func textFieldDidBeginEditing(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
@@ -107,16 +106,15 @@ class ViewController: UIViewController, UITextFieldDelegate {
 //      }
    
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        setup()
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        NotificationCenter.default.removeObserver(self)
     }
     
     private func setup() {
         self.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(hideKeyboard)))
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
     }
     
     @objc private func hideKeyboard() {
@@ -124,27 +122,16 @@ class ViewController: UIViewController, UITextFieldDelegate {
     }
     
     @objc func keyboardWillShow(notification: NSNotification) {
-        if let keyboardFrame: NSValue = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
+        guard let keyboardFrame: NSValue = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {return}
             let keyboardHide = keyboardFrame.cgRectValue.height
             let bottomSpace = self.view.frame.height - (authButton.frame.origin.y + authButton.frame.height)
-            self.view.frame.origin.y -= keyboardHide - bottomSpace + 10
+            self.view.frame.origin.y = -(keyboardHide - bottomSpace + 10)
             print(keyboardFrame)
-        }
     }
     
-    @objc private func keyboardWillHide() {
+    @objc private func keyboardWillHide(notification: NSNotification) {
         self.view.frame.origin.y = 0
         print("Клавиатура пропала")
     }
     
-    deinit {
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
-    
 }
-
-
-
-
-
